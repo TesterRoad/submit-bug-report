@@ -1,0 +1,144 @@
+/* ============================================================
+   Bug Report Generator · 设计变量层 (Design Tokens)
+   ------------------------------------------------------------
+   单一事实来源：颜色 / 间距 / 圆角 / 字号 / 阴影 / 动效
+   新增主题只需在下方追加一组 [data-theme="xxx"] 选择器，
+   组件样式（styles.css）无需改动。
+
+   主题挂载方式：<html data-theme="dark">（缺省即 dark）
+   ============================================================ */
+
+/* ---------- 深色（默认）---------- */
+:root,
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* 表面：三级明度分层，靠明度差而非边框区分层级 */
+  --surface-base:    #0B0D10;   /* 页面底 */
+  --surface-card:    #14171C;   /* 卡片 */
+  --surface-inset:   #090B0E;   /* 卡内凹槽：预览、日志、终端 */
+  --surface-raised:  #1B1F26;   /* 悬浮层、次要强调按钮 */
+  --surface-hover:   #20252D;
+
+  /* 描边 */
+  --border-subtle:   rgba(255, 255, 255, 0.055);  /* 分隔线 */
+  --border-default:  rgba(255, 255, 255, 0.09);   /* 控件默认 */
+  --border-strong:   rgba(255, 255, 255, 0.16);   /* hover / 强调 */
+
+  /* 文本 */
+  --text-primary:    #E8EBEF;   /* 对 --surface-card 约 15:1 */
+  --text-secondary:  #9BA3AE;   /* 约 7:1 */
+  --text-dim:        #7C8593;   /* 约 4.9:1，占位符 / 极次要 */
+
+  /* 品牌主色：全屏只用于「主操作按钮 / 激活态 / 焦点环」三处 */
+  --accent:          #5B9DFF;
+  --accent-hover:    #74ACFF;
+  --accent-ink:      #06101F;   /* 主按钮上的文字，对 --accent 约 6.3:1 */
+  --accent-soft:     rgba(91, 157, 255, 0.12);
+  --accent-ring:     rgba(91, 157, 255, 0.35);
+
+  /* 语义色：仅用于状态标记，不用于大色块 */
+  --success:         #4ADE80;
+  --success-soft:    rgba(74, 222, 128, 0.12);
+  --danger:          #FF6B6B;
+  --danger-soft:     rgba(255, 107, 107, 0.12);
+  --danger-solid:    #DC2626;   /* 实心危险按钮底，配白字约 5.1:1 */
+  --danger-ink:      #FFFFFF;
+  --warning:         #F5B454;
+  --warning-soft:    rgba(245, 180, 84, 0.12);
+
+  /* 顶部环境光：唯一的装饰，替代原星空/HUD 层 */
+  --ambient: radial-gradient(120% 60% at 50% -10%, rgba(91, 157, 255, 0.07) 0%, transparent 70%);
+
+  /* 阴影 */
+  --shadow-card:  0 1px 2px rgba(0, 0, 0, 0.30);
+  --shadow-pop:   0 16px 48px rgba(0, 0, 0, 0.55);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+
+  /* 滚动条 */
+  --scrollbar-thumb: rgba(255, 255, 255, 0.11);
+  --scrollbar-thumb-hover: rgba(255, 255, 255, 0.22);
+}
+
+/* ---------- 浅色（预留，切换成本 ≈ 0）---------- */
+:root[data-theme="light"] {
+  color-scheme: light;
+
+  --surface-base:    #F4F5F7;
+  --surface-card:    #FFFFFF;
+  --surface-inset:   #FAFBFC;
+  --surface-raised:  #ECEEF1;
+  --surface-hover:   #E3E6EA;
+
+  --border-subtle:   rgba(16, 24, 40, 0.06);
+  --border-default:  rgba(16, 24, 40, 0.12);
+  --border-strong:   rgba(16, 24, 40, 0.22);
+
+  --text-primary:    #14181F;
+  --text-secondary:  #5A626E;
+  --text-dim:        #7B8493;
+
+  --accent:          #2563EB;
+  --accent-hover:    #1D4ED8;
+  --accent-ink:      #FFFFFF;
+  --accent-soft:     rgba(37, 99, 235, 0.09);
+  --accent-ring:     rgba(37, 99, 235, 0.30);
+
+  --success:         #15803D;
+  --success-soft:    rgba(21, 128, 61, 0.10);
+  --danger:          #DC2626;
+  --danger-soft:     rgba(220, 38, 38, 0.09);
+  --danger-solid:    #DC2626;
+  --danger-ink:      #FFFFFF;
+  --warning:         #B45309;
+  --warning-soft:    rgba(180, 83, 9, 0.10);
+
+  --ambient: linear-gradient(180deg, #FFFFFF 0%, #F4F5F7 100%);
+
+  --shadow-card:  0 1px 2px rgba(16, 24, 40, 0.06), 0 0 0 1px rgba(16, 24, 40, 0.04);
+  --shadow-pop:   0 16px 48px rgba(16, 24, 40, 0.18);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+
+  --scrollbar-thumb: rgba(16, 24, 40, 0.16);
+  --scrollbar-thumb-hover: rgba(16, 24, 40, 0.28);
+}
+
+/* ---------- 与主题无关的标尺 ---------- */
+:root {
+  /* 间距（4 的倍数） */
+  --sp-1: 4px;
+  --sp-2: 6px;
+  --sp-3: 8px;
+  --sp-4: 10px;
+  --sp-5: 12px;
+  --sp-6: 14px;
+  --sp-7: 16px;
+  --sp-8: 20px;
+  --sp-9: 24px;
+
+  /* 圆角：小控件 6，按钮 8，卡片 10 */
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 10px;
+  --r-full: 999px;
+
+  /* 字号 */
+  --fs-xs: 10px;
+  --fs-sm: 11px;
+  --fs-md: 12px;
+  --fs-base: 13px;
+  --fs-lg: 15px;
+
+  /* 字体：系统栈，无外链依赖，中西文同源字重 */
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI Variable Text", "Segoe UI",
+             "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei UI", "Microsoft YaHei",
+             system-ui, sans-serif;
+  --font-mono: "SF Mono", ui-monospace, "Cascadia Code", "JetBrains Mono",
+               Consolas, "Courier New", monospace;
+
+  /* 动效 */
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 120ms;
+  --dur: 180ms;
+}

@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>截图预览 · Bug Report Generator</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' data: blob:; img-src 'self' data: blob: http: https:; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:;">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;600;700;800&family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* viewer 场景下的全屏适配 */
+  html, body {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow: hidden !important;
+  }
+  /* viewer 场景不需要圆角外框 */
+  body {
+    width: 100% !important;
+    min-height: 100% !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+  }
+  body::before,
+  body::after {
+    /* viewer 全屏铺满，星云/网格仍保留 fixed（不需要被 body 裁） */
+    position: fixed !important;
+  }
+
+  .viewer-shell {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 18px 22px 22px 22px;
+    box-sizing: border-box;
+    gap: 14px;
+    color: #e2e8f0;
+    font-family: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  }
+
+  /* 顶部 HUD 栏 */
+  .viewer-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-radius: 12px;
+    background:
+      linear-gradient(180deg, rgba(24,26,36,0.8), rgba(16,18,26,0.7));
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow:
+      0 8px 30px rgba(0,0,0,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    backdrop-filter: blur(14px) saturate(180%);
+    -webkit-backdrop-filter: blur(14px) saturate(180%);
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+  }
+  .viewer-topbar::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 0%, #38bdf8 30%, #0284c7 70%, transparent 100%);
+    opacity: 0.85;
+  }
+  .viewer-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .viewer-logo {
+    width: 28px; height: 28px;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #0284c7, #38bdf8);
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 800;
+    font-size: 15px;
+    letter-spacing: -0.01em;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 14px rgba(56,189,248,0.35);
+  }
+  .viewer-title-text {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.1;
+  }
+  .viewer-title-text .zh {
+    font-family: 'Orbitron', 'Noto Sans SC', sans-serif;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    font-size: 13.5px;
+    color: #f8fafc;
+  }
+  .viewer-title-text .sub {
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 9.5px;
+    color: #94a3b8;
+    letter-spacing: 0.18em;
+    margin-top: 3px;
+  }
+
+  /* 关闭按钮 */
+  .viewer-close {
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(244, 63, 94, 0.35);
+    background: rgba(244, 63, 94, 0.12);
+    color: #fca5a5;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease-out;
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  }
+  .viewer-close:hover,
+  .viewer-close:focus-visible {
+    color: #fff;
+    border-color: #f43f5e;
+    background: rgba(244, 63, 94, 0.25);
+    box-shadow: 0 4px 14px rgba(244,63,94,0.35);
+    outline: none;
+    transform: scale(1.03);
+  }
+
+  /* 视口 · 图片居中 */
+  .viewer-stage {
+    flex: 1 1 auto;
+    min-height: 0;           /* 关键：允许 img 在 flex 场景下按 max-height 算 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 12px;
+    border-radius: 14px;
+    background:
+      linear-gradient(180deg, rgba(15,23,42,0.4), rgba(8,12,20,0.5));
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow:
+      0 16px 60px rgba(0,0,0,0.55),
+      inset 0 1px 0 rgba(255,255,255,0.06);
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+  }
+  .viewer-stage::before {
+    content: "";
+    position: absolute;
+    top: 12px; left: 12px; right: 12px; bottom: 12px;
+    pointer-events: none;
+    background:
+      linear-gradient(90deg, rgba(59,130,246,0.45), transparent 70%) left top / 24px 1px no-repeat,
+      linear-gradient(180deg, rgba(59,130,246,0.45), transparent 70%) left top / 1px 24px no-repeat,
+      linear-gradient(270deg, rgba(59,130,246,0.45), transparent 70%) right bottom / 24px 1px no-repeat,
+      linear-gradient(0deg, rgba(59,130,246,0.45), transparent 70%) right bottom / 1px 24px no-repeat,
+      linear-gradient(270deg, rgba(99,102,241,0.45), transparent 70%) right top / 24px 1px no-repeat,
+      linear-gradient(180deg, rgba(99,102,241,0.45), transparent 70%) right top / 1px 24px no-repeat,
+      linear-gradient(90deg, rgba(99,102,241,0.45), transparent 70%) left bottom / 24px 1px no-repeat,
+      linear-gradient(0deg, rgba(99,102,241,0.45), transparent 70%) left bottom / 1px 24px no-repeat;
+    opacity: 0.35;
+  }
+
+  #viewerImg {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 10px;
+    box-shadow:
+      0 20px 80px rgba(0,0,0,0.62),
+      0 0 0 1px rgba(255,255,255,0.07);
+    background:
+      linear-gradient(45deg, #0b0f1a 25%, #111827 25%, #111827 50%, #0b0f1a 50%, #0b0f1a 75%, #111827 75%);
+    background-size: 16px 16px;
+    image-rendering: -webkit-optimize-contrast;
+    -webkit-user-drag: none;
+    user-select: none;
+    transition: transform 0.2s ease-out;
+  }
+  #viewerImg.loading { opacity: 0; }
+  #viewerImg.loaded  { opacity: 1; }
+  #viewerImg:active  { transform: scale(0.996); cursor: grabbing; }
+
+  /* 底部状态栏 */
+  .viewer-statusbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(2, 6, 23, 0.55);
+    border: 1px solid rgba(255,255,255,0.07);
+    font-family: 'JetBrains Mono', Consolas, monospace;
+    font-size: 10.5px;
+    color: #94a3b8;
+    letter-spacing: 0.1em;
+    user-select: none;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+  .viewer-statusbar .dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px rgba(16,185,129,0.55);
+    margin-right: 6px;
+    animation: viewerPulse 2.2s ease-in-out infinite alternate;
+  }
+  @keyframes viewerPulse {
+    0%   { opacity: 1;   transform: scale(1); }
+    100% { opacity: 0.5; transform: scale(0.88); }
+  }
+  .viewer-statusbar .hint {
+    color: #64748b;
+  }
+  .viewer-statusbar kbd {
+    font-family: inherit;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 5px;
+    background: rgba(6,182,212,0.12);
+    border: 1px solid rgba(6,182,212,0.28);
+    color: #67e8f9;
+    letter-spacing: 0.06em;
+    margin: 0 2px;
+  }
+
+  /* 占位：加载中 / 加载失败 */
+  .viewer-placeholder {
+    color: #94a3b8;
+    font-family: 'Noto Sans SC', sans-serif;
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .viewer-placeholder h4 {
+    margin: 0 0 10px 0;
+    color: #cbd5e1;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.06em;
+  }
+  .viewer-placeholder.error h4 { color: #fca5a5; }
+  .viewer-placeholder p {
+    margin: 0;
+    color: #64748b;
+    font-size: 12.5px;
+    line-height: 1.7;
+  }
+</style>
+</head>
+<body>
+  <div class="viewer-shell">
+
+    <!-- 顶部 HUD 栏 -->
+    <header class="viewer-topbar">
+      <div class="viewer-title">
+        <div class="viewer-logo" aria-hidden="true">B</div>
+        <div class="viewer-title-text">
+          <span class="zh">截图预览 · SCREENSHOT VIEWER</span>
+          <span class="sub">BUG · REPORT · GENERATOR</span>
+        </div>
+      </div>
+      <button type="button" class="viewer-close" id="viewerCloseBtn" aria-label="关闭窗口" title="关闭窗口 (ESC)">&times;</button>
+    </header>
+
+    <!-- 图片舞台 -->
+    <section class="viewer-stage" id="viewerStage" aria-label="大图预览区">
+      <img id="viewerImg" alt="大图预览" draggable="false" class="loading">
+    </section>
+
+    <!-- 底部状态栏 -->
+    <footer class="viewer-statusbar">
+      <div>
+        <span class="dot" aria-hidden="true"></span>
+        <span id="viewerState">准备就绪</span>
+      </div>
+      <div class="hint">
+        快捷键：
+        <kbd>ESC</kbd>
+        关闭窗口 ·
+        <kbd>点击空白</kbd>
+        关闭
+      </div>
+    </footer>
+  </div>
+
+  <script src="viewer.js"></script>
+</body>
+</html>

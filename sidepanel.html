@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Bug Report Generator - 侧边栏</title>
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* 侧边栏专用布局：仅调整容器伸展方式，视觉样式全部继承 styles.css */
+    body {
+      width: auto !important;
+      min-width: 360px !important;
+      max-width: 100% !important;
+      min-height: 0 !important;
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+    .container {
+      flex: 1;
+      height: 100%;
+      min-height: 0 !important;
+      gap: var(--sp-3);
+      overflow: hidden;
+    }
+    .container > h2,
+    .bug-info,
+    .actions {
+      flex: 0 0 auto;
+    }
+    .preview {
+      flex: 1 1 280px;
+      min-height: 0;
+    }
+    .filter-section {
+      display: flex;
+      flex: 0 1 auto;
+      flex-direction: column;
+      min-height: 112px;
+    }
+    .filter-header {
+      flex: 0 0 auto;
+    }
+    .filter-toolbar,
+    .filter-tools {
+      flex: 0 0 auto;
+    }
+    .interface-list {
+      flex: 1 1 150px;
+      min-height: 44px;
+    }
+    .report-content {
+      display: block;
+      flex: 1 1 0;
+      min-height: 0;
+      max-height: none;
+    }
+    .preview-empty {
+      margin: auto;
+      color: var(--text-dim);
+      text-align: center;
+    }
+    .footer-note {
+      width: auto !important;
+    }
+    /* 矮屏：仅压缩按钮高度，2 列 3 行结构保持一致 */
+    @media (max-height: 720px) {
+      .actions {
+        gap: var(--sp-2);
+      }
+      .btn {
+        height: 30px;
+        padding: 0 var(--sp-2);
+        font-size: var(--fs-sm);
+      }
+      #toggleRecord.btn.primary,
+      #toggleRecord.btn.danger,
+      #clearData.btn.danger {
+        height: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <!-- ====== 太空背景层（纯装饰，不影响业务逻辑） ====== -->
+    <div class="popup-bg" aria-hidden="true">
+      <div class="pg-galaxy"></div>
+      <div class="pg-nebula pg-nebula-a"></div>
+      <div class="pg-nebula pg-nebula-b"></div>
+      <div class="pg-nebula pg-nebula-c"></div>
+      <div class="pg-galaxy-distant"></div>
+      <div class="pg-planet pg-planet-1"></div>
+      <div class="pg-planet pg-planet-2"></div>
+      <div class="pg-planet pg-planet-3"></div>
+      <div class="pg-planet pg-planet-4"></div>
+      <div class="pg-moon"></div>
+      <div class="pg-asteroid a1"></div>
+      <div class="pg-asteroid a2"></div>
+      <div class="pg-asteroid a3"></div>
+      <div class="pg-asteroid a4"></div>
+      <div class="pg-asteroid a5"></div>
+      <div class="pg-comet"></div>
+      <div class="pg-meteor pg-meteor-1"></div>
+      <div class="pg-meteor pg-meteor-2"></div>
+      <div class="pg-grid"></div>
+      <div class="pg-stars">
+        <span class="pg-star s1"></span><span class="pg-star s2"></span>
+        <span class="pg-star s3"></span><span class="pg-star s4"></span>
+        <span class="pg-star s5"></span><span class="pg-star s6"></span>
+        <span class="pg-star s7"></span><span class="pg-star s8"></span>
+        <span class="pg-star s9"></span><span class="pg-star s10"></span>
+        <span class="pg-star s11"></span><span class="pg-star s12"></span>
+        <span class="pg-star s13"></span><span class="pg-star s14"></span>
+        <span class="pg-star s15"></span><span class="pg-star s16"></span>
+      </div>
+    </div>
+
+    <h2>Bug 报告生成器</h2>
+    
+    <div class="status-section">
+      <span id="status">就绪</span>
+    </div>
+
+    <div class="bug-info">
+      <div class="title-row">
+        <input type="text" id="bugTitle" placeholder="输入 Bug 标题..." class="input-field">
+        <button id="copyTitle" class="btn-copy-title" title="复制标题">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="12" height="12" rx="2"/>
+            <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
+          </svg>
+        </button>
+        <button id="generateTitle" class="btn-generate" title="AI 生成标题">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2z"/>
+            <span>AI</span>
+          </svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="toggleRecord" class="btn primary">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 7l-7 5 7 5V7z"/>
+            <rect x="1" y="5" width="15" height="14" rx="2"/>
+          </svg>
+        </span>
+        <span class="btn-label">开始记录步骤</span>
+      </button>
+      <button id="captureScreenshot" class="btn secondary">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 7a2 2 0 0 1 2-2h2l2-3h6l2 3h2a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/>
+            <circle cx="12" cy="13" r="3.5"/>
+          </svg>
+        </span>
+        <span class="btn-label">截取当前页面</span>
+      </button>
+      <button id="generateReport" class="btn secondary">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 4h12l4 4v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/>
+            <path d="M16 4v4h4M7 14h10M7 18h7"/>
+          </svg>
+        </span>
+        <span class="btn-label">更新预览</span>
+      </button>
+      <button id="copyReport" class="btn primary">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="9" y="9" width="12" height="12" rx="2"/>
+            <path d="M5 15V5a2 2 0 0 1 2-2h10"/>
+            <path d="M9 13l2 2 4-4"/>
+          </svg>
+        </span>
+        <span class="btn-label">复制报告内容</span>
+      </button>
+      <button id="clearData" class="btn danger">
+        <span class="icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+          </svg>
+        </span>
+        <span class="btn-label">清除数据</span>
+      </button>
+    </div>
+
+    <div class="filter-section">
+      <div class="filter-header">
+        <h3>接口筛选</h3>
+        <span id="filterSummary" class="filter-summary"></span>
+      </div>
+      <div class="filter-toolbar">
+        <div class="filter-modes">
+          <button type="button" class="filter-mode active" data-mode="all">全部</button>
+          <button type="button" class="filter-mode" data-mode="failed">失败</button>
+          <button type="button" class="filter-mode" data-mode="slow">慢请求</button>
+        </div>
+        <input type="text" id="filterSearch" class="filter-search" placeholder="搜索 URL">
+      </div>
+      <div class="filter-toolbar filter-tools">
+        <button type="button" id="filterSelectAll" class="btn-mini">全选</button>
+        <button type="button" id="filterInvert" class="btn-mini">反选</button>
+        <button type="button" id="filterOnlyFailed" class="btn-mini">只选失败</button>
+      </div>
+      <div id="interfaceList" class="interface-list">
+        <p style="color:#999; margin:4px 0;">暂无接口</p>
+      </div>
+    </div>
+
+    <div class="preview">
+      <h3>预览</h3>
+      <div id="reportPreview" class="report-content">
+        <div class="preview-empty">等待生成...</div>
+      </div>
+    </div>
+
+    <div class="screenshots-preview">
+      <h3>已捕获截图</h3>
+      <div id="screenshotList" class="screenshot-grid">
+        <!-- 截图将显示在这里 -->
+      </div>
+    </div>
+  </div>
+  <div class="footer-note">公众号：测试工程师成长之路</div>
+
+  <!-- 齿轮按钮 - 底部右下角 -->
+  <button id="openSettings" class="settings-btn" title="插件设置（自动截图 / LLM）">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="12" cy="12" r="3"/>
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0-.33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82-.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+    </svg>
+  </button>
+
+  <!-- Lightbox 大图预览（点击报告区的截图时打开；默认隐藏） -->
+  <div id="lightboxOverlay" class="lightbox" role="dialog" aria-modal="true" aria-hidden="true" aria-label="截图大图预览">
+    <button type="button" class="lightbox-close" aria-label="关闭预览">&times;</button>
+    <div class="lightbox-viewport">
+      <img id="lightboxImage" alt="截图大图" draggable="false">
+    </div>
+  </div>
+
+  <script src="title-prompt.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
